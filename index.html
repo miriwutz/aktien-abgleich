@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aktien-Abgleich</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><div><small>GEMEINSAME AKTIENÜBERSICHT</small><h1>Aktien-Abgleich</h1><p>Fairer Wert · IST-Wert · Prognose · Quellen</p></div><div><span id="connectionStatus">Nicht angemeldet</span> <button id="logoutBtn" class="hidden">Abmelden</button></div></header>
+<main>
+<section id="loginSection" class="panel login"><h2>Anmelden</h2><label>E-Mail<input id="loginEmail" type="email"></label><label>Passwort<input id="loginPassword" type="password"></label><button id="loginBtn">Anmelden</button><p id="loginMessage"></p></section>
+<section id="appSection" class="hidden">
+<div class="toolbar panel"><h2>Aktien <span id="entryCount">0</span></h2><div><button class="sort active" data-sort="date">Datum ↓</button><button class="sort" data-sort="branch">Branche</button><button class="sort" data-sort="person">Person</button></div></div>
+<section id="stockList"></section><section id="emptyState" class="panel empty"><h3>Noch keine Einträge</h3><p>Lege unten den ersten Eintrag an.</p></section>
+<section id="formPanel" class="panel hidden"><div class="formhead"><h2>Aktie erfassen</h2><button id="closeForm">×</button></div>
+<form id="stockForm"><div class="grid">
+<label>Wer hat es angelegt?<select id="person" required><option value="">Bitte auswählen</option><option>Billy</option><option>Louis</option></select></label>
+<label>Branche<select id="branch" required><option value="">Bitte auswählen</option><option>Informationstechnologie</option><option>Finanzwesen</option><option>Nicht-Basiskonsumgüter</option><option>Gesundheitswesen</option><option>Industrie</option><option>Kommunikation</option><option>Basiskonsumgüter</option><option>Grundstoffe</option><option>Energie</option><option>Versorger</option><option>Immobilien</option></select></label>
+<label>Aktienname<input id="stockName" required></label><label>Fairer Wert<input id="fairValue" type="number" step=".01"></label>
+<label>IST-Wert<input id="currentValue" type="number" step=".01" required><small>IST-Wert = 100 %</small></label>
+<label>Prognose VK<div class="range"><input id="forecastFrom" type="number" step=".01" required><span>bis</span><input id="forecastTo" type="number" step=".01" required></div><small id="forecastPreview">Prognose VK: –</small></label>
+<label>Dividende<input id="dividend" type="number" step=".01"><span><input id="noDividend" type="checkbox"> keine Dividende</span></label>
+<label>Wichtigkeit<select id="importance"><option value="normal">Normal</option><option value="wichtig">Wichtig</option><option value="sehr-wichtig">Sehr wichtig</option></select></label>
+<label class="wide">Quelle<input id="source" placeholder="https://aktienfinder.net/... oder Text"></label><label class="wide">Notiz<textarea id="note"></textarea></label>
+</div><div class="actions"><button type="button" id="cancelBtn">Abbrechen</button><button type="submit">💾 Speichern</button></div><p id="saveMessage"></p></form></section>
+<button id="addBtn" class="add">＋ Eintrag</button></section></main><div id="toast"></div><script type="module" src="app.js"></script></body></html>
