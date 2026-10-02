@@ -33,6 +33,7 @@
 
 <section id="appSection" class="hidden">
 <section class="toolbar">
+<div class="toolbar-main">
 <div>
 <span class="toolbar-label">Sortieren nach</span>
 <div class="sort-buttons">
@@ -41,6 +42,31 @@
 <button class="sort-button" data-sort="person" type="button">Person</button>
 </div>
 </div>
+
+<div class="filter-area">
+<label class="filter-field">Branche
+<select id="branchFilter">
+<option value="">Alle Branchen</option>
+<option>Informationstechnologie</option>
+<option>Finanzwesen</option>
+<option>Nicht-Basiskonsumgüter</option>
+<option>Gesundheitswesen</option>
+<option>Industrie</option>
+<option>Kommunikation</option>
+<option>Basiskonsumgüter</option>
+<option>Grundstoffe</option>
+<option>Energie</option>
+<option>Versorger</option>
+<option>Immobilien</option>
+</select>
+</label>
+
+<label class="filter-field search-field">Aktienname suchen
+<input id="stockSearch" type="search" placeholder="z. B. Novo Nordisk">
+</label>
+</div>
+</div>
+
 <div class="entry-counter"><strong id="entryCount">0</strong><span>Einträge</span></div>
 </section>
 
