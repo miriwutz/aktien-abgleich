@@ -43,6 +43,8 @@ const $ = (id) => document.getElementById(id);
 let stocks = [];
 let unsubscribe = null;
 let sortMode = "date";
+let branchFilter = "";
+let stockSearch = "";
 
 // ------------------------------------------------------
 // DANKESSPRÜCHE
@@ -163,7 +165,20 @@ function updateForecastPreview() {
 // ------------------------------------------------------
 
 function getSortedStocks() {
-    const list = [...stocks];
+    const search = stockSearch.trim().toLocaleLowerCase("de");
+
+    const list = stocks.filter((item) => {
+        const matchesBranch =
+            !branchFilter || item.branch === branchFilter;
+
+        const matchesSearch =
+            !search ||
+            String(item.stockName || "")
+                .toLocaleLowerCase("de")
+                .includes(search);
+
+        return matchesBranch && matchesSearch;
+    });
 
     if (sortMode === "branch") {
         list.sort((a, b) =>
@@ -190,7 +205,18 @@ function renderStocks() {
     const list = getSortedStocks();
 
     $("entryCount").textContent = list.length;
-    $("emptyState").classList.toggle("hidden", list.length > 0);
+
+    if (stocks.length === 0) {
+        $("emptyState").innerHTML =
+            "Noch keine Einträge vorhanden.<br>Lege unten den ersten Eintrag an.";
+        $("emptyState").classList.remove("hidden");
+    } else if (list.length === 0) {
+        $("emptyState").innerHTML =
+            "Keine passenden Einträge gefunden.<br>Bitte Filter oder Suchbegriff ändern.";
+        $("emptyState").classList.remove("hidden");
+    } else {
+        $("emptyState").classList.add("hidden");
+    }
 
     $("stockList").innerHTML = list.map((item) => {
 
@@ -347,6 +373,16 @@ document.querySelectorAll(".sort-button").forEach((button) => {
         sortMode = button.dataset.sort || "date";
         renderStocks();
     });
+});
+
+$("branchFilter").addEventListener("change", (event) => {
+    branchFilter = event.target.value;
+    renderStocks();
+});
+
+$("stockSearch").addEventListener("input", (event) => {
+    stockSearch = event.target.value;
+    renderStocks();
 });
 
 // ------------------------------------------------------
