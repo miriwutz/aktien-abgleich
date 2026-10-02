@@ -17,6 +17,11 @@ h1,h2,h3{margin-top:0}h1{margin-bottom:6px;font-size:clamp(2rem,4vw,3rem);font-w
 .login-card{max-width:760px;padding:30px}.login-card>p{color:var(--muted)}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 22px;margin-bottom:22px}
 .toolbar-label{display:block;margin-bottom:8px;color:var(--muted);font-size:.82rem}
+.toolbar-main{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.filter-area{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.filter-field{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:.78rem;font-weight:600}
+.filter-field select,.filter-field input{min-width:190px;padding:8px 11px;background:white;font-size:.86rem}
+.search-field input{min-width:220px}
 .sort-buttons{display:flex;gap:7px;flex-wrap:wrap}
 .sort-button,.secondary-button,.card-actions button{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:10px;padding:8px 13px}
 .sort-button.active{background:var(--accent);border-color:var(--accent);color:white}
@@ -44,5 +49,5 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .primary-button,.add-button{border:0;border-radius:12px;background:var(--accent);color:white;font-weight:700;padding:11px 18px}.primary-button:hover,.add-button:hover{background:var(--accent-dark)}
 .add-button{display:block;margin:25px auto 0;padding:13px 28px}.message{min-height:20px;color:#9b6256;font-size:.85rem}
 .toast{position:fixed;right:24px;bottom:24px;max-width:min(430px,calc(100% - 40px));padding:14px 17px;border:1px solid var(--border);border-radius:13px;background:var(--surface);box-shadow:var(--shadow);color:var(--text);opacity:0;transform:translateY(12px);pointer-events:none;transition:.22s ease}.toast.show{opacity:1;transform:translateY(0)}
-@media(max-width:800px){.header{flex-direction:column}.toolbar{align-items:flex-start;flex-direction:column}.metrics{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}label.wide,.calculation-box.wide{grid-column:auto}.card-actions{width:100%;margin-left:0;flex-wrap:wrap}}
+@media(max-width:800px){.header{flex-direction:column}.toolbar{align-items:flex-start;flex-direction:column}.toolbar-main{width:100%;align-items:flex-start}.filter-area{width:100%}.filter-field,.filter-field select,.filter-field input{width:100%;min-width:0}.metrics{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}label.wide,.calculation-box.wide{grid-column:auto}.card-actions{width:100%;margin-left:0;flex-wrap:wrap}}
 @media(max-width:520px){.page{width:calc(100% - 20px);padding-top:22px}.login-card,.form-panel{padding:20px}.metrics{grid-template-columns:1fr}.card-top{flex-direction:column}.card-bottom{flex-direction:column;align-items:flex-start}.form-actions{flex-direction:column-reverse}.form-actions button{width:100%}}
