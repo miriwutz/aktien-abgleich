@@ -230,11 +230,16 @@ function renderStocks() {
             ? `${formatPercent(forecast.from)} – ${formatPercent(forecast.to)}`
             : "–";
 
-        const source = item.source
-            ? isUrl(item.source)
-                ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">↗ Quelle öffnen</a>`
-                : `Quelle: ${escapeHtml(item.source)}`
-            : "Keine Quelle";
+        const savedSources = Array.isArray(item.sources) ? item.sources : (item.source ? [{ title: "Quelle", url: item.source }] : []);
+        const source = savedSources.length
+            ? `<div class="source-links">${savedSources.map((entry, index) => {
+                const title = String(entry.title || `Quelle ${index + 1}`);
+                const url = String(entry.url || "").trim();
+                return isUrl(url)
+                    ? `<a class="source-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">↗ ${escapeHtml(title)}</a>`
+                    : `<span class="source-link">${escapeHtml(title)}${url ? `: ${escapeHtml(url)}` : ""}</span>`;
+            }).join("")}</div>`
+            : "Keine Quellen hinterlegt";
 
         const personClass =
             String(item.person || "").toLowerCase() === "billy"
@@ -306,9 +311,38 @@ function renderStocks() {
 // FORMULAR
 // ------------------------------------------------------
 
+function addSourceRow(title = "", url = "") {
+    const row = document.createElement("div");
+    row.className = "source-row";
+    row.innerHTML = `<input class="source-title" type="text" aria-label="Quellentitel" placeholder="Titel, z. B. Aktienfinder"><input class="source-url" type="text" aria-label="Quellenlink" placeholder="https://..."><button class="source-remove" type="button" aria-label="Quelle entfernen">Entfernen</button>`;
+    row.querySelector(".source-title").value = title;
+    row.querySelector(".source-url").value = url;
+    row.querySelector(".source-remove").addEventListener("click", () => row.remove());
+    $("sourceFields").appendChild(row);
+}
+
+function collectSources() {
+    return [...document.querySelectorAll("#sourceFields .source-row")]
+        .map((row) => ({
+            title: row.querySelector(".source-title").value.trim(),
+            url: row.querySelector(".source-url").value.trim()
+        }))
+        .filter((source) => source.title || source.url);
+}
+
+function showSources(sources, legacySource = "") {
+    $("sourceFields").innerHTML = "";
+    const list = Array.isArray(sources) && sources.length
+        ? sources
+        : (legacySource ? [{ title: "Bisherige Quelle", url: legacySource }] : []);
+    if (list.length) list.forEach((source) => addSourceRow(source.title || "", source.url || ""));
+    else addSourceRow();
+}
+
 function openForm() {
     $("formPanel").classList.remove("hidden");
     $("stockForm").reset();
+    showSources([]);
     delete $("stockForm").dataset.editId;
     $("dividend").disabled = false;
     $("saveMessage").textContent = "";
@@ -351,6 +385,7 @@ $("logoutBtn").addEventListener("click", () => signOut(auth));
 // ------------------------------------------------------
 
 $("addBtn").addEventListener("click", openForm);
+$("addSourceBtn").addEventListener("click", () => addSourceRow());
 $("closeForm").addEventListener("click", closeForm);
 $("cancelBtn").addEventListener("click", closeForm);
 
@@ -425,7 +460,7 @@ $("stockForm").addEventListener("submit", async (event) => {
             : Number($("dividend").value),
         noDividend,
         importance: $("importance").value,
-        source: $("source").value.trim(),
+        sources: collectSources(),
         note: $("note").value.trim(),
         updatedAt: serverTimestamp(),
         updatedByUid: auth.currentUser.uid
@@ -497,12 +532,12 @@ $("stockList").addEventListener("click", async (event) => {
             "forecastTo",
             "dividend",
             "importance",
-            "source",
             "note"
         ].forEach((field) => {
             if ($(field)) $(field).value = item[field] ?? "";
         });
 
+        showSources(item.sources || [], item.source || "");
         $("noDividend").checked = !!item.noDividend;
         $("dividend").disabled = !!item.noDividend;
         updateForecastPreview();
