@@ -45,6 +45,12 @@ let unsubscribe = null;
 let sortMode = "date";
 let branchFilter = "";
 let stockSearch = "";
+let messages = [];
+let unsubscribeMessages = null;
+let inboxVisible = false;
+let notificationEnabled = false;
+let knownMessageIds = new Set();
+let firstMessageSnapshot = true;
 
 // ------------------------------------------------------
 // DANKESSPRÜCHE
@@ -126,6 +132,165 @@ function showToast(message) {
     toast.textContent = message;
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3200);
+}
+
+// ------------------------------------------------------
+// NACHRICHTEN-PINNWAND & BENACHRICHTIGUNGEN
+// ------------------------------------------------------
+
+function formatMessageDate(value) {
+    if (!value) return "Gerade eben";
+    const date = value.toDate ? value.toDate() : new Date(value);
+    if (Number.isNaN(date.getTime())) return "Gerade eben";
+    return new Intl.DateTimeFormat("de-AT", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(date);
+}
+
+function playNotificationSound() {
+    const sound = $("notificationSound")?.value || "bling";
+    if (sound === "off") return;
+
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+            showToast("Dein Browser unterstützt den Benachrichtigungston leider nicht.");
+            return;
+        }
+
+        const context = new AudioContextClass();
+        const tones = sound === "soft"
+            ? [{ f: 660, t: 0, d: 0.16, v: 0.045 }]
+            : sound === "double"
+                ? [{ f: 880, t: 0, d: 0.12, v: 0.055 }, { f: 1175, t: 0.16, d: 0.16, v: 0.05 }]
+                : [{ f: 1046, t: 0, d: 0.18, v: 0.055 }];
+
+        tones.forEach((tone) => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = "sine";
+            oscillator.frequency.value = tone.f;
+            gain.gain.setValueAtTime(0.0001, context.currentTime + tone.t);
+            gain.gain.exponentialRampToValueAtTime(tone.v, context.currentTime + tone.t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + tone.t + tone.d);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(context.currentTime + tone.t);
+            oscillator.stop(context.currentTime + tone.t + tone.d + 0.03);
+        });
+
+        setTimeout(() => context.close().catch(() => {}), 900);
+    } catch (error) {
+        console.warn("Benachrichtigungston konnte nicht abgespielt werden:", error);
+    }
+}
+
+function updateUnreadBadge() {
+    const badge = $("unreadBadge");
+    if (!badge) return;
+    const lastSeen = Number(localStorage.getItem("aktienAbgleichMessagesSeenAt") || 0);
+    const unread = messages.filter((message) => {
+        const created = message.createdAt?.toDate
+            ? message.createdAt.toDate().getTime()
+            : Number(message.createdAt || 0);
+        return created > lastSeen && message.createdByUid !== auth.currentUser?.uid;
+    }).length;
+
+    badge.textContent = unread > 99 ? "99+" : String(unread);
+    badge.classList.toggle("hidden", unread === 0);
+}
+
+function markMessagesSeen() {
+    localStorage.setItem("aktienAbgleichMessagesSeenAt", String(Date.now()));
+    updateUnreadBadge();
+}
+
+function renderMessages() {
+    const list = [...messages].sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+    });
+
+    $("messageCount").textContent = `${list.length} ${list.length === 1 ? "Nachricht" : "Nachrichten"}`;
+    $("messageEmptyState").classList.toggle("hidden", list.length > 0);
+
+    $("messageList").innerHTML = list.map((message) => {
+        const sender = String(message.sender || "Billy");
+        const senderClass = sender.toLowerCase() === "billy" ? "sender-billy" : "sender-louis";
+        const newClass = message.createdByUid !== auth.currentUser?.uid ? "is-new" : "";
+
+        return `
+        <article class="message-card ${senderClass} ${newClass}">
+            <div class="message-card-top">
+                <span class="message-sender">${escapeHtml(sender)}</span>
+                <span class="message-date">${escapeHtml(formatMessageDate(message.createdAt))}</span>
+            </div>
+            <div class="message-body">${escapeHtml(message.text || "")}</div>
+            <div class="message-card-bottom">
+                <button type="button" class="message-delete" data-message-delete="${escapeHtml(message.id)}">Löschen</button>
+            </div>
+        </article>`;
+    }).join("");
+
+    updateUnreadBadge();
+}
+
+function setInboxVisible(visible) {
+    inboxVisible = visible;
+    $("stocksPage").classList.toggle("hidden", visible);
+    $("inboxPage").classList.toggle("hidden", !visible);
+    if (visible) {
+        markMessagesSeen();
+        renderMessages();
+        $("inboxPage").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+        $("stocksPage").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+async function enableNotifications() {
+    notificationEnabled = true;
+
+    let browserStatus = "Browser-Pop-ups nicht verfügbar";
+    if ("Notification" in window) {
+        try {
+            const permission = await Notification.requestPermission();
+            browserStatus = permission === "granted"
+                ? "Browser-Benachrichtigungen erlaubt"
+                : "Browser-Pop-ups nicht erlaubt";
+        } catch {
+            browserStatus = "Browser-Pop-ups konnten nicht aktiviert werden";
+        }
+    }
+
+    $("notificationStatus").textContent =
+        `Ton aktiviert · ${browserStatus}. Töne funktionieren, solange die Website geöffnet ist.`;
+    $("notificationEnableBtn").textContent = "Benachrichtigungen aktiviert";
+    $("notificationEnableBtn").classList.add("notifications-on");
+    playNotificationSound();
+    showToast("Benachrichtigungen aktiviert – Test-Bling abgespielt.");
+}
+
+function notifyNewMessage(message) {
+    if (!notificationEnabled) return;
+    if (message.createdByUid === auth.currentUser?.uid) return;
+
+    playNotificationSound();
+
+    if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+        try {
+            new Notification(`Neue Nachricht von ${message.sender || "Billy oder Louis"}`, {
+                body: String(message.text || "").slice(0, 150),
+                tag: `aktien-message-${message.id}`
+            });
+        } catch (error) {
+            console.warn("Browser-Benachrichtigung fehlgeschlagen:", error);
+        }
+    }
 }
 
 // ------------------------------------------------------
@@ -421,6 +586,65 @@ $("stockSearch").addEventListener("input", (event) => {
 });
 
 // ------------------------------------------------------
+// PINNWAND: ÖFFNEN, SENDEN, LÖSCHEN, BENACHRICHTIGUNGEN
+// ------------------------------------------------------
+
+$("inboxOpenBtn").addEventListener("click", () => setInboxVisible(true));
+$("inboxBackBtn").addEventListener("click", () => setInboxVisible(false));
+
+$("notificationEnableBtn").addEventListener("click", enableNotifications);
+$("notificationTestBtn").addEventListener("click", () => {
+    playNotificationSound();
+    showToast("Test-Bling abgespielt.");
+});
+
+$("messageForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!auth.currentUser) {
+        $("messageFormStatus").textContent = "Bitte zuerst anmelden.";
+        return;
+    }
+
+    const text = $("messageText").value.trim();
+    if (!text) {
+        $("messageFormStatus").textContent = "Bitte eine Nachricht eingeben.";
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, "messages"), {
+            sender: $("messageSender").value,
+            text,
+            createdAt: serverTimestamp(),
+            createdByUid: auth.currentUser.uid
+        });
+        $("messageText").value = "";
+        $("messageFormStatus").textContent = "";
+        showToast("Nachricht wurde an die Pinnwand geheftet.");
+    } catch (error) {
+        console.error("Nachricht konnte nicht gespeichert werden:", error);
+        $("messageFormStatus").textContent =
+            "Die Nachricht konnte nicht gespeichert werden. Bitte Firestore-Regeln prüfen.";
+    }
+});
+
+$("messageList").addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-message-delete]");
+    if (!button) return;
+
+    const id = button.dataset.messageDelete;
+    if (!confirm("Diese Nachricht wirklich von der Pinnwand löschen?")) return;
+
+    try {
+        await deleteDoc(doc(db, "messages", id));
+        showToast("Nachricht wurde gelöscht.");
+    } catch (error) {
+        console.error("Nachricht konnte nicht gelöscht werden:", error);
+        showToast("Die Nachricht konnte nicht gelöscht werden. Bitte Firestore-Regeln prüfen.");
+    }
+});
+
+// ------------------------------------------------------
 // SPEICHERN
 // ------------------------------------------------------
 
@@ -561,6 +785,7 @@ onAuthStateChanged(auth, (user) => {
         $("loginSection").classList.add("hidden");
         $("appSection").classList.remove("hidden");
         $("logoutBtn").classList.remove("hidden");
+        $("inboxOpenBtn").classList.remove("hidden");
         $("connectionStatus").textContent = "● Synchronisiert";
 
         if (unsubscribe) unsubscribe();
@@ -586,6 +811,41 @@ onAuthStateChanged(auth, (user) => {
             }
         );
 
+        if (unsubscribeMessages) unsubscribeMessages();
+        firstMessageSnapshot = true;
+        const messagesQuery = query(
+            collection(db, "messages"),
+            orderBy("createdAt", "desc")
+        );
+        unsubscribeMessages = onSnapshot(
+            messagesQuery,
+            (snapshot) => {
+                const incoming = snapshot.docs.map((document) => ({
+                    id: document.id,
+                    ...document.data()
+                }));
+
+                if (!firstMessageSnapshot) {
+                    const freshMessages = incoming.filter((message) =>
+                        !knownMessageIds.has(message.id) &&
+                        message.createdByUid !== auth.currentUser?.uid
+                    );
+                    freshMessages.forEach(notifyNewMessage);
+                }
+
+                knownMessageIds = new Set(incoming.map((message) => message.id));
+                messages = incoming;
+                firstMessageSnapshot = false;
+                renderMessages();
+                if (inboxVisible) markMessagesSeen();
+            },
+            (error) => {
+                console.error("Nachrichten-Fehler:", error);
+                $("notificationStatus").textContent =
+                    "Pinnwand nicht erreichbar. Bitte Firestore-Regeln prüfen.";
+            }
+        );
+
     } else {
         $("loginSection").classList.remove("hidden");
         $("appSection").classList.add("hidden");
@@ -596,7 +856,15 @@ onAuthStateChanged(auth, (user) => {
             unsubscribe();
             unsubscribe = null;
         }
+        if (unsubscribeMessages) {
+            unsubscribeMessages();
+            unsubscribeMessages = null;
+        }
 
+        $("inboxOpenBtn").classList.add("hidden");
+        setInboxVisible(false);
         stocks = [];
+        messages = [];
+        knownMessageIds = new Set();
     }
 });
