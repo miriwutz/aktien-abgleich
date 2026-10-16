@@ -154,6 +154,11 @@ function playNotificationSound() {
     const sound = $("notificationSound")?.value || "bling";
     if (sound === "off") return;
 
+    const volumeControl = $("notificationVolume");
+    const volumePercent = Number(volumeControl?.value ?? localStorage.getItem("aktienAbgleichNotificationVolume") ?? 100);
+    const volume = Math.max(0, Math.min(2, volumePercent / 100));
+    if (volume <= 0) return;
+
     try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) {
@@ -173,8 +178,9 @@ function playNotificationSound() {
             const gain = context.createGain();
             oscillator.type = "sine";
             oscillator.frequency.value = tone.f;
+            const peak = Math.min(0.95, tone.v * (volume / 0.055));
             gain.gain.setValueAtTime(0.0001, context.currentTime + tone.t);
-            gain.gain.exponentialRampToValueAtTime(tone.v, context.currentTime + tone.t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), context.currentTime + tone.t + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + tone.t + tone.d);
             oscillator.connect(gain);
             gain.connect(context.destination);
@@ -591,6 +597,16 @@ $("stockSearch").addEventListener("input", (event) => {
 
 $("inboxOpenBtn").addEventListener("click", () => setInboxVisible(true));
 $("inboxBackBtn").addEventListener("click", () => setInboxVisible(false));
+
+const savedVolume = localStorage.getItem("aktienAbgleichNotificationVolume");
+if (savedVolume !== null) $("notificationVolume").value = savedVolume;
+$("volumeValue").textContent = `${$("notificationVolume").value} %`;
+
+$("notificationVolume").addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    localStorage.setItem("aktienAbgleichNotificationVolume", String(value));
+    $("volumeValue").textContent = `${value} %`;
+});
 
 $("notificationEnableBtn").addEventListener("click", enableNotifications);
 $("notificationTestBtn").addEventListener("click", () => {
