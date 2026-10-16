@@ -103,3 +103,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .sound-choice{width:100%}
 .message-card{padding:15px}
 }
+
+.volume-choice{display:flex;flex-direction:column;gap:6px;min-width:190px;color:var(--muted);font-size:.82rem;font-weight:600}
+.volume-choice input{width:100%;accent-color:var(--accent)}
+.volume-choice #volumeValue{color:var(--text);font-weight:800}
+.volume-hint{font-size:.72rem;font-weight:400;color:var(--muted)}
+.notifications-on{opacity:.85}
