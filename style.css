@@ -110,14 +110,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .volume-hint{font-size:.72rem;font-weight:400;color:var(--muted)}
 .notifications-on{opacity:.85}
 
-
-/* Korrekturen Pinnwand: wichtiger Inhalt, Pop-up und gut sichtbarer Zurück-Button */
-.message-card.important { border: 2px solid #c69b35; border-left-width: 6px; background: #fff8df; box-shadow: 0 3px 14px rgba(160,118,20,.16); }
-.important-badge { display: inline-block; margin: 0 0 9px; padding: 4px 9px; border-radius: 999px; background: #d7aa39; color: #35270a; font-size: .74rem; font-weight: 850; letter-spacing: .03em; }
-.message-popup { position: fixed; z-index: 9999; top: 1rem; left: 50%; transform: translateX(-50%); width: min(92vw, 520px); padding: 1rem 1.1rem; border: 1px solid #8ab59a; border-radius: 16px; background: #f0faf2; color: #243d2c; box-shadow: 0 10px 35px rgba(20,45,28,.2); animation: popup-in .22s ease-out; }
-.message-popup > div { margin-top: 7px; overflow-wrap: anywhere; }
-.message-popup.important { border: 2px solid #c69b35; background: #fff8df; color: #5a4512; }
-.message-popup button { display: inline-block; margin-top: .65rem; padding: .55rem .85rem; border: 0; border-radius: 9px; background: var(--accent-dark); color: white; font-weight: 800; }
-.back-to-stocks-button, #inboxBackBtn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border: 2px solid var(--accent-dark); border-radius: 12px; background: var(--accent-dark); color: #fff; font-weight: 800; box-shadow: 0 4px 12px rgba(48,61,54,.16); }
-.back-to-stocks-button:hover, #inboxBackBtn:hover { background: #3d5848; }
-@keyframes popup-in { from { opacity: 0; transform: translate(-50%,-8px); } to { opacity: 1; transform: translate(-50%,0); } }
+/* Wichtige Pinnwand-Nachrichten und Hinweisfenster */
+.message-important{background:#fff5cc!important;border:2px solid #c99a32!important;border-left:7px solid #c28a16!important;box-shadow:0 4px 18px rgba(174,125,20,.16)!important}
+.important-message-label{display:inline-block;margin-left:8px;padding:3px 7px;border-radius:999px;background:#d9a52c;color:#fff;font-size:.68rem;letter-spacing:.04em;vertical-align:middle}
+.message-important .message-body{font-weight:600;color:#55431a}
+.message-important .message-delete{border-color:#d7b65d}
+.message-important-choice{grid-column:2;display:flex;flex-direction:row;align-items:center;gap:10px;padding:11px 13px;border:1px solid #e0c36e;border-radius:11px;background:#fff8df;color:#6b5014}
+.message-important-choice input{width:18px;height:18px;accent-color:#c28a16}
+.message-important-choice span{display:flex;flex-wrap:wrap;gap:4px;align-items:baseline}
+.message-popup{position:fixed;z-index:1000;right:22px;top:22px;width:min(390px,calc(100vw - 32px));padding:20px 20px 16px;border:2px solid #c99a32;border-radius:16px;background:#fff8df;color:#4e411f;box-shadow:0 12px 40px rgba(70,52,20,.24);animation:messagePopupIn .22s ease-out}
+.message-popup strong{display:block;padding-right:25px;font-size:1.05rem}
+.message-popup p{margin:10px 0 15px;line-height:1.45;overflow-wrap:anywhere}
+.message-popup-close{position:absolute;right:10px;top:8px;border:0;background:transparent;color:#72571b;font-size:1.5rem;cursor:pointer}
+.message-popup .secondary-button{border-color:#d9bb63;background:#fffdf5}
+@keyframes messagePopupIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:800px){.message-important-choice{grid-column:1}}
