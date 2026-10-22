@@ -183,6 +183,7 @@
 <label class="message-text-label">Nachricht
 <textarea id="messageText" rows="3" maxlength="1000" placeholder="Was möchtest du Billy oder Louis mitteilen?" required></textarea>
 </label>
+<label class="message-important-choice"><input id="messageImportant" type="checkbox"> <span><strong>Wichtig</strong> – diese Nachricht gold hervorheben</span></label>
 <div class="message-compose-bottom">
 <span class="label-note">Die Nachricht wird für beide live synchronisiert.</span>
 <button class="primary-button" type="submit">Nachricht anheften</button>
@@ -197,8 +198,15 @@
 <div id="messageEmptyState" class="empty-state">Noch keine Nachrichten auf der Pinnwand.</div>
 <div id="messageList" class="message-list"></div>
 </section>
+</section>
 </main>
 <div id="toast" class="toast"></div>
+<div id="messagePopup" class="message-popup hidden" role="status" aria-live="polite">
+<button id="messagePopupClose" class="message-popup-close" type="button" aria-label="Hinweis schließen">×</button>
+<strong id="messagePopupTitle">Neue Nachricht</strong>
+<p id="messagePopupText"></p>
+<button id="messagePopupOpen" class="secondary-button" type="button">Pinnwand öffnen</button>
+</div>
 <script type="module" src="app.js"></script>
 </body>
 </html>
