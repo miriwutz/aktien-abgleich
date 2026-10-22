@@ -151,12 +151,11 @@ function formatMessageDate(value) {
 }
 
 function playNotificationSound() {
-    const sound = $("notificationSound")?.value || localStorage.getItem("aktienAbgleichNotificationSound") || "bling";
+    const sound = $("notificationSound")?.value || "bling";
     if (sound === "off") return;
 
     const volumeControl = $("notificationVolume");
-    const storedVolume = localStorage.getItem("aktienAbgleichNotificationVolume");
-    const volumePercent = Number(volumeControl?.value ?? storedVolume ?? 100);
+    const volumePercent = Number(volumeControl?.value ?? localStorage.getItem("aktienAbgleichNotificationVolume") ?? 100);
     const volume = Math.max(0, Math.min(2, volumePercent / 100));
     if (volume <= 0) return;
 
@@ -169,18 +168,17 @@ function playNotificationSound() {
 
         const context = new AudioContextClass();
         const tones = sound === "soft"
-            ? [{ f: 660, t: 0, d: 0.16, v: 0.22 }]
+            ? [{ f: 660, t: 0, d: 0.16, v: 0.045 }]
             : sound === "double"
-                ? [{ f: 880, t: 0, d: 0.12, v: 0.30 }, { f: 1175, t: 0.16, d: 0.16, v: 0.27 }]
-                : [{ f: 1046, t: 0, d: 0.18, v: 0.30 }];
+                ? [{ f: 880, t: 0, d: 0.12, v: 0.055 }, { f: 1175, t: 0.16, d: 0.16, v: 0.05 }]
+                : [{ f: 1046, t: 0, d: 0.18, v: 0.055 }];
 
         tones.forEach((tone) => {
             const oscillator = context.createOscillator();
             const gain = context.createGain();
             oscillator.type = "sine";
             oscillator.frequency.value = tone.f;
-            // Der Regler verändert die tatsächliche Verstärkung: 100 % und 200 % sind verschieden.
-            const peak = Math.min(0.95, tone.v * volume);
+            const peak = Math.min(0.95, tone.v * 3.0 * volume);
             gain.gain.setValueAtTime(0.0001, context.currentTime + tone.t);
             gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), context.currentTime + tone.t + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + tone.t + tone.d);
@@ -194,6 +192,15 @@ function playNotificationSound() {
     } catch (error) {
         console.warn("Benachrichtigungston konnte nicht abgespielt werden:", error);
     }
+}
+
+function showIncomingMessagePopup(message) {
+    const popup = $("messagePopup");
+    if (!popup) return;
+    $("messagePopupTitle").textContent = message.important ? "⭐ Wichtige neue Nachricht" : "Neue Nachricht auf der Pinnwand";
+    const preview = String(message.text || "");
+    $("messagePopupText").textContent = `${message.sender || "Billy oder Louis"}: ${preview.length > 180 ? preview.slice(0, 180) + "…" : preview}`;
+    popup.classList.remove("hidden");
 }
 
 function updateUnreadBadge() {
@@ -230,14 +237,13 @@ function renderMessages() {
         const sender = String(message.sender || "Billy");
         const senderClass = sender.toLowerCase() === "billy" ? "sender-billy" : "sender-louis";
         const newClass = message.createdByUid !== auth.currentUser?.uid ? "is-new" : "";
-        const importantClass = message.important ? "important" : "";
-        const importantBadge = message.important ? '<span class="important-badge">★ WICHTIG</span>' : "";
+        const importantClass = message.important ? "message-important" : "";
+        const importantLabel = message.important ? '<span class="important-message-label">★ WICHTIG</span>' : "";
 
         return `
         <article class="message-card ${senderClass} ${newClass} ${importantClass}">
-            ${importantBadge}
             <div class="message-card-top">
-                <span class="message-sender">${escapeHtml(sender)}</span>
+                <span class="message-sender">${escapeHtml(sender)} ${importantLabel}</span>
                 <span class="message-date">${escapeHtml(formatMessageDate(message.createdAt))}</span>
             </div>
             <div class="message-body">${escapeHtml(message.text || "")}</div>
@@ -286,45 +292,16 @@ async function enableNotifications() {
     showToast("Benachrichtigungen aktiviert – Test-Bling abgespielt.");
 }
 
-function showIncomingMessagePopup(message) {
-    let popup = $("messagePopup");
-    if (!popup) {
-        popup = document.createElement("div");
-        popup.id = "messagePopup";
-        popup.className = "message-popup hidden";
-        popup.setAttribute("role", "status");
-        popup.setAttribute("aria-live", "polite");
-        document.body.appendChild(popup);
-    }
-    popup.replaceChildren();
-    popup.classList.toggle("important", Boolean(message.important));
-    popup.classList.remove("hidden");
-    const heading = document.createElement("strong");
-    heading.textContent = message.important ? "WICHTIGE PINNWAND-NACHRICHT" : "Neue Pinnwand-Nachricht";
-    const body = document.createElement("div");
-    body.textContent = String(message.text || "Du hast eine neue Nachricht.");
-    const openButton = document.createElement("button");
-    openButton.type = "button";
-    openButton.textContent = "Pinnwand öffnen";
-    openButton.addEventListener("click", () => {
-        setInboxVisible(true);
-        popup.classList.add("hidden");
-    });
-    popup.append(heading, body, openButton);
-    clearTimeout(window.aktienMessagePopupTimer);
-    window.aktienMessagePopupTimer = setTimeout(() => popup.classList.add("hidden"), message.important ? 10000 : 6500);
-}
-
 function notifyNewMessage(message) {
-    if (!notificationEnabled) return;
     if (message.createdByUid === auth.currentUser?.uid) return;
 
-    playNotificationSound();
     showIncomingMessagePopup(message);
+    if (!notificationEnabled) return;
+    playNotificationSound();
 
     if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
         try {
-            new Notification(`${message.important ? "★ WICHTIG: " : ""}Neue Nachricht von ${message.sender || "Billy oder Louis"}`, {
+            new Notification(`Neue Nachricht von ${message.sender || "Billy oder Louis"}`, {
                 body: String(message.text || "").slice(0, 150),
                 tag: `aktien-message-${message.id}`
             });
@@ -630,27 +607,28 @@ $("stockSearch").addEventListener("input", (event) => {
 // PINNWAND: ÖFFNEN, SENDEN, LÖSCHEN, BENACHRICHTIGUNGEN
 // ------------------------------------------------------
 
-$("inboxOpenBtn")?.addEventListener("click", () => setInboxVisible(true));
-$("inboxBackBtn")?.addEventListener("click", () => setInboxVisible(false));
-$("backToStocks")?.addEventListener("click", () => setInboxVisible(false));
-
-const savedSound = localStorage.getItem("aktienAbgleichNotificationSound");
-if (savedSound && $("notificationSound")) {
-    const hasSavedSound = [...$("notificationSound").options].some((option) => option.value === savedSound);
-    if (hasSavedSound) $("notificationSound").value = savedSound;
-}
-$("notificationSound")?.addEventListener("change", (event) => {
-    localStorage.setItem("aktienAbgleichNotificationSound", event.target.value);
+$("inboxOpenBtn").addEventListener("click", () => setInboxVisible(true));
+$("inboxBackBtn").addEventListener("click", () => setInboxVisible(false));
+$("messagePopupClose").addEventListener("click", () => $("messagePopup").classList.add("hidden"));
+$("messagePopupOpen").addEventListener("click", () => {
+    $("messagePopup").classList.add("hidden");
+    setInboxVisible(true);
 });
 
 const savedVolume = localStorage.getItem("aktienAbgleichNotificationVolume");
-if (savedVolume !== null && $("notificationVolume")) $("notificationVolume").value = savedVolume;
-if ($("volumeValue") && $("notificationVolume")) $("volumeValue").textContent = `${$("notificationVolume").value} %`;
+if (savedVolume !== null) $("notificationVolume").value = savedVolume;
+const savedSound = localStorage.getItem("aktienAbgleichNotificationSound");
+if (savedSound && $("notificationSound")) $("notificationSound").value = savedSound;
+$("volumeValue").textContent = `${$("notificationVolume").value} %`;
 
-$("notificationVolume")?.addEventListener("input", (event) => {
-    const value = Math.max(0, Math.min(200, Number(event.target.value)));
+$("notificationSound").addEventListener("change", (event) => {
+    localStorage.setItem("aktienAbgleichNotificationSound", event.target.value);
+});
+
+$("notificationVolume").addEventListener("input", (event) => {
+    const value = Number(event.target.value);
     localStorage.setItem("aktienAbgleichNotificationVolume", String(value));
-    if ($("volumeValue")) $("volumeValue").textContent = `${value} %`;
+    $("volumeValue").textContent = `${value} %`;
 });
 
 $("notificationEnableBtn").addEventListener("click", enableNotifications);
@@ -676,12 +654,11 @@ $("messageForm").addEventListener("submit", async (event) => {
         await addDoc(collection(db, "messages"), {
             sender: $("messageSender").value,
             text,
-            important: Boolean($("messageImportant")?.checked),
+            important: $("messageImportant").checked,
             createdAt: serverTimestamp(),
             createdByUid: auth.currentUser.uid
         });
         $("messageText").value = "";
-        if ($("messageImportant")) $("messageImportant").checked = false;
         $("messageFormStatus").textContent = "";
         showToast("Nachricht wurde an die Pinnwand geheftet.");
     } catch (error) {
