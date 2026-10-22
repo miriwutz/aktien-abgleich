@@ -1,151 +1,204 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aktien-Abgleich</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aktien-Abgleich</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Gemeinsam vergleichen</p>
-        <h1>Aktien-Abgleich</h1>
-        <p class="subtitle">Gedanken sammeln. Werte vergleichen. Gemeinsam lernen.</p>
-      </div>
-      <button id="signOutButton" class="button secondary hidden" type="button">Abmelden</button>
-    </header>
+<main class="page">
+<header class="header">
+<div>
+<p class="eyebrow">GEMEINSAMER DATENABGLEICH</p>
+<h1>Aktien-Abgleich</h1>
+<p class="subtitle">Zwei Perspektiven · ein übersichtlicher Datenbestand</p>
+</div>
+<div class="connection">
+<span id="connectionStatus">Nicht angemeldet</span>
+<button id="inboxOpenBtn" class="inbox-open-button hidden" type="button" aria-label="Nachrichten-Pinnwand öffnen" title="Nachrichten-Pinnwand">
+<span aria-hidden="true">📌</span> Pinnwand <span id="unreadBadge" class="unread-badge hidden">0</span>
+</button>
+<button id="logoutBtn" class="secondary-button hidden" type="button">Abmelden</button>
+</div>
+</header>
 
-    <section id="loginPanel" class="panel login-panel">
-      <h2>Anmelden</h2>
-      <p>Bitte mit deinem Firebase-Konto anmelden.</p>
-      <form id="loginForm">
-        <label for="loginEmail">E-Mail</label>
-        <input id="loginEmail" type="email" autocomplete="username" required>
-        <label for="loginPassword">Passwort</label>
-        <input id="loginPassword" type="password" autocomplete="current-password" required>
-        <button class="button primary full" type="submit">Anmelden</button>
-        <p id="loginError" class="error" aria-live="polite"></p>
-      </form>
-    </section>
+<section id="loginSection" class="login-card">
+<h2>Anmelden</h2>
+<p>Bitte anmelden, um die gemeinsamen Einträge zu sehen.</p>
+<div class="form-grid">
+<label>E-Mail<input id="loginEmail" type="email" autocomplete="email"></label>
+<label>Passwort<input id="loginPassword" type="password" autocomplete="current-password"></label>
+</div>
+<button id="loginBtn" class="primary-button" type="button">Anmelden</button>
+<p id="loginMessage" class="message"></p>
+</section>
 
-    <section id="appPanel" class="hidden">
-      <nav class="main-actions">
-        <button id="showStocksButton" class="button primary" type="button">Aktien</button>
-        <button id="showMessagesButton" class="button secondary" type="button">📌 Pinnwand <span id="messageCount" class="count-badge">0</span></button>
-      </nav>
+<section id="appSection" class="hidden">
+<section id="stocksPage">
+<section class="toolbar">
+<div class="toolbar-main">
+<div>
+<span class="toolbar-label">Sortieren nach</span>
+<div class="sort-buttons">
+<button class="sort-button active" data-sort="date" type="button">Datum</button>
+<button class="sort-button" data-sort="branch" type="button">Branche</button>
+<button class="sort-button" data-sort="person" type="button">Person</button>
+</div>
+</div>
 
-      <section id="stocksView">
-        <div class="panel">
-          <h2>Aktie eintragen</h2>
-          <form id="stockForm">
-            <div class="form-grid">
-              <div>
-                <label for="creator">Wer hat es angelegt?</label>
-                <select id="creator" required>
-                  <option value="Billy">Billy</option>
-                  <option value="Louis">Louis</option>
-                </select>
-              </div>
-              <div>
-                <label for="stockName">Aktienname</label>
-                <input id="stockName" required placeholder="z. B. Beispiel AG">
-              </div>
-              <div>
-                <label for="sector">Branche</label>
-                <select id="sector" required>
-                  <option>Informationstechnologie</option><option>Finanzwesen</option>
-                  <option>Nicht-Basiskonsumgüter</option><option>Gesundheitswesen</option>
-                  <option>Industrie</option><option>Kommunikation</option>
-                  <option>Basiskonsumgüter</option><option>Grundstoffe</option>
-                  <option>Energie</option><option>Versorger</option><option>Immobilien</option>
-                </select>
-              </div>
-              <div>
-                <label for="fairValue">Fairer Wert (€)</label>
-                <input id="fairValue" type="number" min="0" step="any" required placeholder="100">
-              </div>
-              <div>
-                <label for="currentValue">Aktueller IST-Wert (€)</label>
-                <input id="currentValue" type="number" min="0" step="any" required placeholder="100">
-              </div>
-              <div>
-                <label for="forecastLow">Prognose VK – von (€)</label>
-                <input id="forecastLow" type="number" min="0" step="any" required placeholder="120">
-              </div>
-              <div>
-                <label for="forecastHigh">Prognose VK – bis (€)</label>
-                <input id="forecastHigh" type="number" min="0" step="any" required placeholder="150">
-              </div>
-              <div>
-                <label for="dividend">Dividende (€)</label>
-                <input id="dividend" type="number" min="0" step="any" placeholder="optional">
-                <label class="inline-check"><input id="noDividend" type="checkbox"> Keine Dividende</label>
-              </div>
-              <div>
-                <label for="importance">Wichtigkeit</label>
-                <select id="importance"><option value="Normal">Normal</option><option value="Wichtig">Wichtig</option><option value="Sehr wichtig">Sehr wichtig</option></select>
-              </div>
-            </div>
-            <fieldset class="sources-field">
-              <legend>Quellen (optional)</legend>
-              <div class="source-row">
-                <input id="sourceTitle1" placeholder="Quellentitel, z. B. Aktienfinder">
-                <input id="sourceUrl1" type="url" placeholder="https://..." aria-label="Quellen-URL">
-              </div>
-              <div class="source-row">
-                <input id="sourceTitle2" placeholder="Weiterer Quellentitel">
-                <input id="sourceUrl2" type="url" placeholder="https://..." aria-label="Weitere Quellen-URL">
-              </div>
-            </fieldset>
-            <p id="forecastPreview" class="preview">Prognose relativ zum IST-Wert: –</p>
-            <div class="form-actions">
-              <button id="saveStockButton" class="button primary" type="submit">Aktie speichern</button>
-              <button id="cancelEditButton" class="button secondary hidden" type="button">Bearbeiten abbrechen</button>
-            </div>
-            <p id="stockStatus" class="status" aria-live="polite"></p>
-          </form>
-        </div>
+<div class="filter-area">
+<label class="filter-field">Branche
+<select id="branchFilter">
+<option value="">Alle Branchen</option>
+<option>Informationstechnologie</option>
+<option>Finanzwesen</option>
+<option>Nicht-Basiskonsumgüter</option>
+<option>Gesundheitswesen</option>
+<option>Industrie</option>
+<option>Kommunikation</option>
+<option>Basiskonsumgüter</option>
+<option>Grundstoffe</option>
+<option>Energie</option>
+<option>Versorger</option>
+<option>Immobilien</option>
+</select>
+</label>
 
-        <div class="panel">
-          <div class="section-heading">
-            <div><h2>Vergleich</h2><p class="muted">Einträge werden live synchronisiert.</p></div>
-          </div>
-          <div class="filters">
-            <input id="searchStocks" placeholder="Aktienname suchen">
-            <select id="filterSector"><option value="">Alle Branchen</option></select>
-            <select id="sortStocks"><option value="newest">Neueste zuerst</option><option value="oldest">Älteste zuerst</option><option value="sector">Branche</option><option value="creator">Person</option><option value="name">Aktienname</option></select>
-          </div>
-          <div id="stockList" class="stock-list"><p class="muted">Bitte anmelden, um Einträge zu sehen.</p></div>
-        </div>
-      </section>
+<label class="filter-field search-field">Aktienname suchen
+<input id="stockSearch" type="search" placeholder="z. B. Novo Nordisk">
+</label>
+</div>
+</div>
 
-      <section id="messagesView" class="hidden">
-        <div class="panel">
-          <div class="section-heading">
-            <div><h2>Pinnwand</h2><p class="muted">Kurze Nachrichten zwischen Billy und Louis.</p></div>
-            <button id="backToStocks" class="button back-to-stocks-button" type="button">← Zurück zu den Aktien</button>
-          </div>
-          <form id="messageForm">
-            <label for="messageText">Nachricht</label>
-            <textarea id="messageText" rows="3" maxlength="1000" required placeholder="Schreib eine Nachricht …"></textarea>
-            <label class="important-checkbox"><input id="messageImportant" type="checkbox"> Wichtig – bitte besonders beachten</label>
-            <button class="button primary" type="submit">An Pinnwand heften</button>
-            <p id="messageStatus" class="status" aria-live="polite"></p>
-          </form>
-          <div class="sound-settings">
-            <label for="soundVolume">Benachrichtigungston: <span id="volumeValue">100%</span></label>
-            <input id="soundVolume" type="range" min="0" max="200" step="10" value="100">
-            <button id="testSoundButton" class="button secondary" type="button">Test-Bling</button>
-          </div>
-          <div id="messageList" class="message-list"><p class="muted">Noch keine Nachrichten.</p></div>
-        </div>
-      </section>
-    </section>
-    <div id="messagePopup" class="message-popup hidden" role="status" aria-live="polite"></div>
-    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-  </main>
-  <script type="module" src="app.js"></script>
+<div class="entry-counter"><strong id="entryCount">0</strong><span>Einträge</span></div>
+</section>
+
+<section class="entries-section">
+<div id="emptyState" class="empty-state">Noch keine Einträge vorhanden.<br>Lege unten den ersten Eintrag an.</div>
+<div id="stockList"></div>
+</section>
+
+<section id="formPanel" class="form-panel hidden">
+<div class="section-heading">
+<div><p class="eyebrow">NEUER EINTRAG</p><h2>Aktie erfassen</h2></div>
+<button id="closeForm" class="icon-button" type="button">×</button>
+</div>
+
+<form id="stockForm">
+<div class="form-grid">
+<label>Wer hat es angelegt?
+<select id="person" required>
+<option value="">Bitte auswählen</option>
+<option value="Billy">Billy</option>
+<option value="Louis">Louis</option>
+</select>
+</label>
+
+<label>Branche
+<select id="branch" required>
+<option value="">Bitte auswählen</option>
+<option>Informationstechnologie</option>
+<option>Finanzwesen</option>
+<option>Nicht-Basiskonsumgüter</option>
+<option>Gesundheitswesen</option>
+<option>Industrie</option>
+<option>Kommunikation</option>
+<option>Basiskonsumgüter</option>
+<option>Grundstoffe</option>
+<option>Energie</option>
+<option>Versorger</option>
+<option>Immobilien</option>
+</select>
+</label>
+
+<label class="wide">Aktienname<input id="stockName" type="text" placeholder="z. B. Microsoft" required></label>
+<label>Fairer Wert<input id="fairValue" type="number" step="0.01" min="0"></label>
+<label>IST-Wert<span class="label-note">Dieser Wert entspricht 100 %</span><input id="currentValue" type="number" step="0.01" min="0" required></label>
+<label>Prognose VK von<input id="forecastFrom" type="number" step="0.01" min="0" required></label>
+<label>Prognose VK bis<input id="forecastTo" type="number" step="0.01" min="0" required></label>
+<div id="forecastPreview" class="calculation-box wide">Prognose VK: –</div>
+<label>Dividende in %<input id="dividend" type="number" step="0.01" min="0"></label>
+<label class="checkbox-label"><span>Keine Dividende</span><input id="noDividend" type="checkbox"></label>
+<label>Wichtigkeit
+<select id="importance">
+<option value="normal">Normal</option>
+<option value="wichtig">Wichtig</option>
+<option value="sehr-wichtig">Sehr wichtig</option>
+</select>
+</label>
+<div class="wide sources-editor"><div class="sources-heading"><div><strong>Quellen</strong><span class="label-note">Für jede Quelle einen kurzen Titel und einen Link eintragen.</span></div><button id="addSourceBtn" class="secondary-button" type="button">+ Quelle hinzufügen</button></div><div id="sourceFields"></div></div>
+<label class="wide">Eigene Notiz<textarea id="note" rows="3"></textarea></label>
+</div>
+<p id="saveMessage" class="message"></p>
+<div class="form-actions">
+<button id="cancelBtn" class="secondary-button" type="button">Abbrechen</button>
+<button class="primary-button" type="submit">Eintrag speichern</button>
+</div>
+</form>
+</section>
+<button id="addBtn" class="add-button" type="button">+ Eintrag</button>
+</section>
+
+<section id="inboxPage" class="inbox-page hidden">
+<div class="inbox-heading">
+<div>
+<p class="eyebrow">BILLY & LOUIS</p>
+<h2>Nachrichten-Pinnwand</h2>
+<p class="subtitle">Kurze Nachrichten teilen und löschen, wenn sie nicht mehr gebraucht werden.</p>
+</div>
+<button id="inboxBackBtn" class="secondary-button" type="button">← Zurück zu den Aktien</button>
+</div>
+
+<section class="notification-settings">
+<div>
+<strong>Benachrichtigungen</strong>
+<p id="notificationStatus" class="label-note">Ton und Browser-Benachrichtigungen sind ausgeschaltet.</p>
+</div>
+<div class="notification-actions">
+<label class="sound-choice">Ton
+<select id="notificationSound">
+<option value="bling">Bling</option>
+<option value="soft">Sanfter Ton</option>
+<option value="double">Doppel-Bling</option>
+<option value="off">Kein Ton</option>
+</select>
+</label>
+<label class="volume-choice">Lautstärke <span id="volumeValue">100 %</span>
+<input id="notificationVolume" type="range" min="0" max="200" step="10" value="100">
+<span class="volume-hint">Bis 200 % · „Sehr laut“</span>
+</label>
+<button id="notificationEnableBtn" class="primary-button" type="button">Benachrichtigungen aktivieren</button>
+<button id="notificationTestBtn" class="secondary-button" type="button">♪ Test-Bling</button>
+</div>
+</section>
+
+<form id="messageForm" class="message-compose">
+<label>Absender
+<select id="messageSender" required>
+<option value="Billy">Billy</option>
+<option value="Louis">Louis</option>
+</select>
+</label>
+<label class="message-text-label">Nachricht
+<textarea id="messageText" rows="3" maxlength="1000" placeholder="Was möchtest du Billy oder Louis mitteilen?" required></textarea>
+</label>
+<div class="message-compose-bottom">
+<span class="label-note">Die Nachricht wird für beide live synchronisiert.</span>
+<button class="primary-button" type="submit">Nachricht anheften</button>
+</div>
+<p id="messageFormStatus" class="message"></p>
+</form>
+
+<div class="message-board-top">
+<h3>Aktuelle Nachrichten</h3>
+<span id="messageCount" class="label-note">0 Nachrichten</span>
+</div>
+<div id="messageEmptyState" class="empty-state">Noch keine Nachrichten auf der Pinnwand.</div>
+<div id="messageList" class="message-list"></div>
+</section>
+</main>
+<div id="toast" class="toast"></div>
+<script type="module" src="app.js"></script>
 </body>
 </html>
