@@ -3,12 +3,18 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDgCVWVi77tfW8U-_r9tk1qMYQGL_iJx4",
+ apiKey: "AIzaSyDgCVWVi77TfmW8U-_r9tk1qMYQGL_iJx4",
+
   authDomain: "aktien-abgleich.firebaseapp.com",
+
   projectId: "aktien-abgleich",
+
   storageBucket: "aktien-abgleich.firebasestorage.app",
+
   messagingSenderId: "1042057620402",
+
   appId: "1:1042057620402:web:8ce592c1f5c745f9aad2ab"
+
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
