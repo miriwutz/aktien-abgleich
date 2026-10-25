@@ -24,6 +24,23 @@ h1,h2,h3{margin-top:0}h1{margin-bottom:6px;font-size:clamp(2rem,4vw,3rem);font-w
 .search-field input{min-width:220px}
 .sort-buttons{display:flex;gap:7px;flex-wrap:wrap}
 .sort-button,.secondary-button,.card-actions button{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:10px;padding:8px 13px}
+
+/* Zurück zu den Aktien – gut sichtbar */
+#inboxBackBtn {
+  background: #a66b45;
+  color: #ffffff;
+  border: 2px solid #3d5748;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(48, 61, 54, 0.18);
+}
+
+#inboxBackBtn:hover {
+  background: #354f40;
+  border-color: #354f40;
+}
+
 .sort-button.active{background:var(--accent);border-color:var(--accent);color:white}
 .entry-counter{display:flex;align-items:baseline;gap:7px;color:var(--muted)}.entry-counter strong{color:var(--text);font-size:1.25rem}
 .empty-state{padding:45px 20px;border:1px dashed var(--border);border-radius:var(--radius);text-align:center;color:var(--muted);background:rgba(255,255,255,.45)}
